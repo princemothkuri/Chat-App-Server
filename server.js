@@ -11,17 +11,20 @@ dotenv.config();
 connectDB();
 const app = express();
 
-app.use(
-  cors({
-    origin: "https://chat-app-client-xi-weld.vercel.app", // Use HTTP instead of HTTPS
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    credentials: true,
-    allowedHeaders: "Content-Type, Authorization",
-  })
-);
+// CORS configuration
+const corsOptions = {
+  origin: "https://chat-app-client-xi-weld.vercel.app", // Your frontend URL
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+  allowedHeaders: "Content-Type, Authorization", // Allow these headers
+  preflightContinue: true, // Pass preflight response to the next handler
+  optionsSuccessStatus: 200, // Some browsers (e.g., Safari) don't accept 204 status
+};
 
-app.use(express.json());
+app.use(cors(corsOptions)); // Apply the CORS configuration
+app.use(express.json()); // Middleware to parse JSON requests
 
+// API Routes
 app.use("/api/user", userRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/message", messageRoutes);
@@ -41,17 +44,15 @@ const server = app.listen(
   console.log(`Server running on PORT ${PORT}...`.yellow.bold)
 );
 
+// Socket.io setup with CORS configuration
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
-  cors: {
-    origin: "https://chat-app-client-xi-weld.vercel.app", // Use HTTP instead of HTTPS
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    credentials: true,
-    allowedHeaders: "Content-Type, Authorization",
-  },
+  cors: corsOptions,
 });
 
 io.on("connection", (socket) => {
+  console.log("Connected to socket.io");
+
   socket.on("setup", (userData) => {
     socket.join(userData._id);
     socket.emit("connected");
@@ -72,7 +73,7 @@ io.on("connection", (socket) => {
     chat.users.forEach((user) => {
       if (user._id == newMessageRecieved.sender._id) return;
 
-      socket.in(user._id).emit("message recieved", newMessageRecieved);
+      socket.in(user._id).emit("message received", newMessageRecieved);
     });
   });
 
