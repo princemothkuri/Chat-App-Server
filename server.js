@@ -13,13 +13,13 @@ const app = express();
 
 app.use(
   cors({
-    origin: "*",
+    origin: "https://chat-app-client-xi-weld.vercel.app", // Use HTTP instead of HTTPS
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
     allowedHeaders: "Content-Type, Authorization",
   })
 );
-app.options("*", cors());
+
 app.use(express.json());
 
 app.use("/api/user", userRoutes);
@@ -34,7 +34,7 @@ app.get("/", (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 
 const server = app.listen(
   PORT,
@@ -44,7 +44,7 @@ const server = app.listen(
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
-    origin: "*",
+    origin: "https://chat-app-client-xi-weld.vercel.app", // Use HTTP instead of HTTPS
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
     allowedHeaders: "Content-Type, Authorization",
@@ -52,7 +52,6 @@ const io = require("socket.io")(server, {
 });
 
 io.on("connection", (socket) => {
-  // console.log("Connected to socket.io");
   socket.on("setup", (userData) => {
     socket.join(userData._id);
     socket.emit("connected");
@@ -60,8 +59,8 @@ io.on("connection", (socket) => {
 
   socket.on("join chat", (room) => {
     socket.join(room);
-    // console.log("User Joined Room: " + room);
   });
+
   socket.on("typing", (room) => socket.in(room).emit("typing"));
   socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
 
